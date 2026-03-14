@@ -1,0 +1,149 @@
+name: Electron Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Vite + Electron main
+        run: npm run electron:build
+
+      - name: Build Electron (Linux)
+        run: npx electron-builder --linux AppImage deb
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            electron-dist/*.AppImage
+            electron-dist/*.deb
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Vite + Electron main
+        run: npm run electron:build
+
+      - name: Build Electron (Windows)
+        run: npx electron-builder --win nsis portable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            electron-dist/*.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Vite + Electron main
+        run: npm run electron:build
+
+      - name: Build Electron (macOS)
+        run: npx electron-builder --mac dmg zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: |
+            electron-dist/*.dmg
+            electron-dist/*.zip
+
+  release:
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.tag != ''
+    steps:
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ "${{ github.event.inputs.tag }}" != "" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: nyandeck ${{ steps.tag.outputs.tag }}
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag, 'alpha') || contains(steps.tag.outputs.tag, 'beta') || contains(steps.tag.outputs.tag, 'rc') }}
+          files: artifacts/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

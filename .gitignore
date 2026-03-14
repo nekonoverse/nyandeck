@@ -1,3 +1,5 @@
 node_modules/
 dist/
 .claude/
+electron/main.js
+electron-dist/
