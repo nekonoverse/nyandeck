@@ -64,6 +64,214 @@ a:hover {
   color: var(--accent-hover);
 }
 
+/* ===== Loading Screen ===== */
+
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* ===== Login Screen ===== */
+
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--bg-primary);
+  padding: 16px;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-title {
+  text-align: center;
+  font-size: 2em;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.login-instance {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  margin-bottom: 20px;
+}
+
+.server-url-section {
+  margin-bottom: 20px;
+}
+
+.server-url-display {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.server-url-display:hover {
+  border-color: var(--accent);
+}
+
+.server-url-edit {
+  display: flex;
+  gap: 8px;
+}
+
+.server-url-edit input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.85em;
+}
+
+.server-url-edit input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn-connect {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.btn-connect:hover {
+  background: var(--accent-hover);
+}
+
+.btn-connect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: rgba(233, 69, 96, 0.15);
+  color: var(--accent);
+  border-radius: var(--radius);
+  font-size: 0.9em;
+}
+
+.auth-form {
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.auth-form h2 {
+  margin-bottom: 16px;
+  font-size: 1.1em;
+}
+
+.auth-form .field {
+  margin-bottom: 14px;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 1em;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.auth-form > button[type="submit"] {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1em;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.auth-form > button[type="submit"]:hover {
+  background: var(--accent-hover);
+}
+
+.auth-form > button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.passkey-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.passkey-divider::before,
+.passkey-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.btn-passkey {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.95em;
+  cursor: pointer;
+}
+
+.btn-passkey:hover {
+  border-color: var(--accent);
+}
+
+.btn-passkey:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ===== Deck Layout ===== */
 
 .deck-layout {
