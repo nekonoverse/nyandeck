@@ -1,6 +1,6 @@
 {
   "name": "nyandeck",
-  "version": "20260313-1",
+  "version": "2026.0313.1",
   "private": true,
   "type": "module",
   "main": "electron/main.js",
