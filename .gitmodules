@@ -2,3 +2,6 @@
 	path = .nekonoverse
 	url = https://github.com/nekonoverse/nekonoverse.git
 	branch = develop
+[submodule "claude-md"]
+	path = claude-md
+	url = https://github.com/nekonoverse/claude-md.git
