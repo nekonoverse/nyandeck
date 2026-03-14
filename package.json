@@ -5,12 +5,12 @@
   "author": "nekonoverse <nekonoverse-contact.ebay844@passmail.net>",
   "private": true,
   "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "electron:build-main": "esbuild electron/main.ts --bundle --platform=node --outfile=electron/main.js --external:electron --format=cjs",
+    "electron:build-main": "esbuild electron/main.ts --bundle --platform=node --outfile=electron/main.cjs --external:electron --format=cjs",
     "electron:build": "npm run build && npm run electron:build-main",
     "electron:dev": "npm run electron:build-main && electron .",
     "electron:dist": "npm run electron:build && electron-builder"

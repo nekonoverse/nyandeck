@@ -8,14 +8,14 @@ directories:
 
 files:
   - dist/**/*
-  - electron/main.js
+  - electron/main.cjs
   - "!node_modules/**/*"
   - "!CLAUDE.md"
   - "!claude-md"
   - "!.nekonoverse"
 
 extraMetadata:
-  main: electron/main.js
+  main: electron/main.cjs
 
 asar: true
 
