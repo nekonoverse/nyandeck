@@ -87,14 +87,7 @@ jobs:
             electron-dist/*.exe
 
   build-macos:
-    strategy:
-      matrix:
-        include:
-          - runner: macos-latest
-            arch: arm64
-          - runner: macos-13
-            arch: x64
-    runs-on: ${{ matrix.runner }}
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -116,15 +109,15 @@ jobs:
       - name: Build Vite + Electron main
         run: npm run electron:build
 
-      - name: Build Electron (macOS ${{ matrix.arch }})
-        run: npx electron-builder --mac dmg zip --${{ matrix.arch }}
+      - name: Build Electron (macOS x64 + arm64)
+        run: npx electron-builder --mac dmg zip --x64 --arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-${{ matrix.arch }}-artifacts
+          name: macos-artifacts
           path: |
             electron-dist/*.dmg
             electron-dist/*.zip
