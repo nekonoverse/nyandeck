@@ -1,6 +1,8 @@
 {
   "name": "nyandeck",
   "version": "2026.0313.1",
+  "description": "Deck-style client for Nekonoverse",
+  "author": "nekonoverse <nekonoverse-contact.ebay844@passmail.net>",
   "private": true,
   "type": "module",
   "main": "electron/main.js",
