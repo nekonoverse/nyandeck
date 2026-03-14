@@ -1,10 +1,11 @@
-import { onMount, onCleanup, createEffect } from "solid-js";
+import { onMount, onCleanup, createEffect, Show } from "solid-js";
 import { I18nProvider } from "@nekonoverse/ui/i18n";
 import { initTheme } from "@nekonoverse/ui/stores/theme";
-import { fetchCurrentUser, currentUser } from "@nekonoverse/ui/stores/auth";
+import { fetchCurrentUser, currentUser, authLoading } from "@nekonoverse/ui/stores/auth";
 import { fetchInstance, startVersionPolling } from "@nekonoverse/ui/stores/instance";
 import { connect, disconnect } from "@nekonoverse/ui/stores/streaming";
 import DeckLayout from "./components/deck/DeckLayout";
+import LoginScreen from "./components/LoginScreen";
 
 initTheme();
 
@@ -28,7 +29,11 @@ export default function App() {
 
   return (
     <I18nProvider>
-      <DeckLayout />
+      <Show when={!authLoading()} fallback={<div class="loading-screen" />}>
+        <Show when={currentUser()} fallback={<LoginScreen />}>
+          <DeckLayout />
+        </Show>
+      </Show>
     </I18nProvider>
   );
 }

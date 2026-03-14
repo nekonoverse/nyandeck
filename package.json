@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "electron:build-main": "esbuild electron/main.ts --bundle --platform=node --outfile=electron/main.cjs --external:electron --format=cjs",
+    "electron:build-main": "esbuild electron/main.ts electron/preload.ts --bundle --platform=node --outdir=electron --out-extension:.js=.cjs --external:electron --format=cjs",
     "electron:build": "npm run build && npm run electron:build-main",
     "electron:dev": "npm run electron:build-main && electron .",
     "electron:dist": "npm run electron:build && electron-builder"

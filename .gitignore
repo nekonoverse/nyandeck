@@ -2,4 +2,5 @@ node_modules/
 dist/
 .claude/
 electron/main.cjs
+electron/preload.cjs
 electron-dist/

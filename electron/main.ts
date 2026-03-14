@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol, net } from "electron";
+import { app, BrowserWindow, ipcMain, protocol, net } from "electron";
 import path from "path";
 import fs from "fs";
 
@@ -20,6 +20,20 @@ function getServerUrl(): string {
 
   return "https://n.arkjp.net";
 }
+
+function saveServerUrl(url: string): void {
+  const configPath = path.join(app.getPath("userData"), "config.json");
+  let config: Record<string, unknown> = {};
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch {
+    /* start fresh */
+  }
+  config.serverUrl = url;
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+}
+
+let serverUrl = getServerUrl();
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -52,7 +66,6 @@ protocol.registerSchemesAsPrivileged([
 let mainWindow: BrowserWindow | null = null;
 
 async function createWindow() {
-  const serverUrl = getServerUrl();
   const distDir = path.join(__dirname, "..", "dist");
 
   protocol.handle("nyandeck", (request) => {
@@ -98,6 +111,13 @@ async function createWindow() {
     }
   });
 
+  // IPC handlers for server URL management
+  ipcMain.handle("get-server-url", () => serverUrl);
+  ipcMain.handle("set-server-url", (_event, url: string) => {
+    serverUrl = url;
+    saveServerUrl(url);
+  });
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -107,6 +127,7 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, "preload.cjs"),
     },
   });
 
