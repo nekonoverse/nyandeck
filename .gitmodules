@@ -1,0 +1,4 @@
+[submodule ".nekonoverse"]
+	path = .nekonoverse
+	url = https://github.com/nekonoverse/nekonoverse.git
+	branch = develop
