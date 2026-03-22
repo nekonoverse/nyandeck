@@ -243,15 +243,20 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
           console.log("[oauth] authorize URL:", authorizeUrl);
         }
 
-        // Intercept the callback URL via webRequest (most reliable method)
+        // Intercept the callback URL via webRequest (no URL filter — catch all)
         authWindow.webContents.session.webRequest.onBeforeRequest(
-          { urls: [`${REDIRECT_URI}*`] },
           (details, callback) => {
+            if (debug) console.log("[oauth] request:", details.url);
+            if (!details.url.startsWith(REDIRECT_URI)) {
+              callback({});
+              return;
+            }
             if (settled) {
               callback({ cancel: true });
               return;
             }
             settled = true;
+            if (debug) console.log("[oauth] CAUGHT callback:", details.url);
             callback({ cancel: true });
 
             (async () => {
@@ -285,6 +290,41 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
             })();
           },
         );
+
+        // Fallback: also check did-navigate in case webRequest didn't fire
+        authWindow.webContents.on("did-navigate", (_event, navUrl) => {
+          if (settled || !navUrl.startsWith(REDIRECT_URI)) return;
+          settled = true;
+          if (debug) console.log("[oauth] CAUGHT via did-navigate:", navUrl);
+
+          (async () => {
+            try {
+              const callbackUrl = new URL(navUrl);
+              const code = callbackUrl.searchParams.get("code");
+              const returnedState = callbackUrl.searchParams.get("state");
+
+              if (!code) throw new Error("No authorization code received");
+              if (returnedState !== state) throw new Error("State mismatch");
+
+              const accessToken = await exchangeCodeForToken(
+                baseUrl,
+                code,
+                oauthConfig!.client_id,
+                oauthConfig!.client_secret,
+                codeVerifier,
+              );
+
+              oauthConfig!.access_token = accessToken;
+              saveOAuthConfig(baseUrl, oauthConfig!);
+
+              authWindow.close();
+              resolve();
+            } catch (err) {
+              authWindow.close();
+              reject(err);
+            }
+          })();
+        });
 
         authWindow.on("closed", () => {
           if (!settled) {
