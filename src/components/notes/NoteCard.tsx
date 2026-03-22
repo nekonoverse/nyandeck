@@ -39,6 +39,7 @@ import { renderMfm } from "@nekonoverse/ui/utils/mfm";
 import { activateTouchGuard } from "../../utils/touchGuard";
 import { nyaizeElement } from "@nekonoverse/ui/utils/nyaize";
 import { defaultAvatar } from "@nekonoverse/ui/stores/instance";
+import { navigateToProfile, openComposer, openProfile } from "../../stores/modals";
 
 interface Props {
   note: Note;
@@ -69,7 +70,6 @@ const revealedSensitiveNoteIds = new Set<string>();
 
 function QuoteEmbed(props: { note: Note }) {
   const { t } = useI18n();
-  const navigate = (path: string) => window.open(path, "_blank");
   const [quoteRevealed, setQuoteRevealed] = createSignal(false);
   const handleClick = (e: MouseEvent) => {
     if ((e.target as HTMLElement).closest("a")) return;
@@ -87,7 +87,7 @@ function QuoteEmbed(props: { note: Note }) {
         <a
           href={profileUrl(props.note.actor)}
           class="note-quote-name"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateToProfile(props.note.actor); }}
         >
           <strong
             ref={(el) => {
@@ -251,7 +251,6 @@ function PollDisplay(props: { poll: Poll; noteId: string }) {
 
 export default function NoteCard(props: Props) {
   const { t } = useI18n();
-  const navigate = (path: string) => window.open(path, "_blank");
   const [moreOpen, setMoreOpen] = createSignal(false);
   const [nyaizeSuppressed, setNyaizeSuppressed] = createSignal(false);
   const [boosted, setBoosted] = createSignal(props.note.reblogged || (props.note.reblog?.reblogged ?? false));
@@ -450,7 +449,11 @@ export default function NoteCard(props: Props) {
   };
 
   const handleQuote = () => {
-    props.onQuote?.(displayNote());
+    if (props.onQuote) {
+      props.onQuote(displayNote());
+    } else {
+      openComposer({ quoteNote: displayNote() });
+    }
   };
 
   // Long press on boost/fav to show who did it
@@ -504,7 +507,7 @@ export default function NoteCard(props: Props) {
     if (props.onReply) {
       props.onReply(displayNote());
     } else {
-      navigate(`/notes/${displayNote().id}`);
+      openComposer({ replyTo: displayNote() });
     }
   };
 
@@ -517,7 +520,7 @@ export default function NoteCard(props: Props) {
       if (props.onThreadOpen) {
         props.onThreadOpen(displayNote().id);
       } else {
-        navigate(`/notes/${displayNote().id}`);
+        window.open(`/notes/${displayNote().id}`, "_blank");
       }
     }, 500);
   };
@@ -588,6 +591,7 @@ export default function NoteCard(props: Props) {
         <div class="note-reblog-indicator">
           <a
             href={profileUrl(props.note.actor)}
+            onClick={(e) => { e.preventDefault(); navigateToProfile(props.note.actor); }}
             ref={(el) => {
               el.textContent =
                 props.note.actor.display_name || props.note.actor.username;
@@ -629,7 +633,7 @@ export default function NoteCard(props: Props) {
           </a>
         )}
       </Show>
-      <a href={profileUrl(note().actor)} class="note-avatar-link">
+      <a href={profileUrl(note().actor)} class="note-avatar-link" onClick={(e) => { e.preventDefault(); navigateToProfile(note().actor); }}>
         <img
           class="note-avatar"
           src={note().actor.avatar_url || defaultAvatar()}
@@ -1154,7 +1158,7 @@ export default function NoteCard(props: Props) {
                 return (
                   <button
                     class="reacted-by-item"
-                    onClick={() => { closeActionModal(); window.open(`/@${u.acct}`, "_blank"); }}
+                    onClick={() => { closeActionModal(); openProfile({ acct: u.acct }); }}
                   >
                     <img
                       class="reacted-by-avatar"

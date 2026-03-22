@@ -12,6 +12,7 @@ import { getNote } from "@nekonoverse/ui/api/statuses";
 import { onNotification, onReaction } from "@nekonoverse/ui/stores/streaming";
 import { useI18n } from "@nekonoverse/ui/i18n";
 import { defaultAvatar } from "@nekonoverse/ui/stores/instance";
+import { navigateToProfile } from "../../stores/modals";
 
 function actorHandle(account: Notification["account"]): string {
   if (!account) return "";
@@ -166,7 +167,7 @@ export default function MentionColumn() {
                           class="notification-actor"
                           onClick={(e) => {
                             e.preventDefault();
-                            window.open(profileUrl(notif.account), "_blank");
+                            if (notif.account) navigateToProfile(notif.account);
                           }}
                         >
                           <img

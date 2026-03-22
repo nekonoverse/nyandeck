@@ -13,6 +13,7 @@ import { importedShortcodes } from "@nekonoverse/ui/api/emoji";
 import { useI18n } from "@nekonoverse/ui/i18n";
 import { defaultAvatar } from "@nekonoverse/ui/stores/instance";
 import { activateTouchGuard } from "../../utils/touchGuard";
+import { navigateToProfile } from "../../stores/modals";
 
 interface Props {
   noteId: string;
@@ -352,7 +353,7 @@ export default function ReactionBar(props: Props) {
                   return (
                     <button
                       class="reacted-by-item"
-                      onClick={() => { closeModal(); window.open(`/${handle}`, "_blank"); }}
+                      onClick={() => { closeModal(); navigateToProfile(ru.actor); }}
                     >
                       <img
                         class="reacted-by-avatar"

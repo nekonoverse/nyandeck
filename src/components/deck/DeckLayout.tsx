@@ -2,6 +2,8 @@ import { For, Switch, Match } from "solid-js";
 import { columns } from "../../stores/columns";
 import Column from "./Column";
 import Sidebar from "./Sidebar";
+import ComposeModal from "./ComposeModal";
+import ProfileModal from "./ProfileModal";
 import TimelineColumn from "../columns/TimelineColumn";
 import NotificationColumn from "../columns/NotificationColumn";
 import MentionColumn from "../columns/MentionColumn";
@@ -32,6 +34,8 @@ export default function DeckLayout() {
           )}
         </For>
       </div>
+      <ComposeModal />
+      <ProfileModal />
     </div>
   );
 }

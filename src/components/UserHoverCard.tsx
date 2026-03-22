@@ -7,6 +7,7 @@ import { sanitizeHtml } from "@nekonoverse/ui/utils/sanitize";
 import { emojify } from "@nekonoverse/ui/utils/emojify";
 import { twemojify } from "@nekonoverse/ui/utils/twemojify";
 import { defaultAvatar } from "@nekonoverse/ui/stores/instance";
+import { openProfile } from "../stores/modals";
 
 interface Props {
   actorId: string;
@@ -32,7 +33,7 @@ const isTouchDevice = () =>
 
 export default function UserHoverCard(props: Props) {
   const { t } = useI18n();
-  const navigate = (path: string) => window.open(path, "_blank");
+  const navigate = (acct: string) => openProfile({ acct });
   const [visible, setVisible] = createSignal(false);
   const [account, setAccount] = createSignal<Account | null>(null);
   const [followLoading, setFollowLoading] = createSignal(false);
@@ -228,7 +229,7 @@ export default function UserHoverCard(props: Props) {
                       e.preventDefault();
                       e.stopPropagation();
                       setVisible(false);
-                      navigate(`/@${acc.acct}`);
+                      navigate(acc.acct);
                     }}>
                       <img
                         class="hover-card-avatar"
@@ -241,7 +242,7 @@ export default function UserHoverCard(props: Props) {
                         e.preventDefault();
                         e.stopPropagation();
                         setVisible(false);
-                        navigate(`/@${acc.acct}`);
+                        navigate(acc.acct);
                       }}>
                         <strong class="hover-card-display-name" ref={(el) => {
                           el.textContent = acc.display_name || acc.username;

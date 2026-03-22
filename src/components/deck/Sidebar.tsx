@@ -1,23 +1,18 @@
 import { createSignal, Show } from "solid-js";
 import { useI18n } from "@nekonoverse/ui/i18n";
 import { currentUser } from "@nekonoverse/ui/stores/auth";
-import { logout } from "@nekonoverse/ui/stores/auth";
 import { defaultAvatar } from "@nekonoverse/ui/stores/instance";
 import { addColumn, type ColumnType } from "../../stores/columns";
+import { openComposer } from "../../stores/modals";
 import SettingsPanel from "./SettingsPanel";
+import AccountMenu from "./AccountMenu";
 
 export default function Sidebar() {
   const { t } = useI18n();
   const [showSettings, setShowSettings] = createSignal(false);
+  const [showAccountMenu, setShowAccountMenu] = createSignal(false);
 
   const user = () => currentUser();
-
-  const handleLogout = async () => {
-    if (window.nyandeck) {
-      await window.nyandeck.oauthLogout();
-    }
-    await logout();
-  };
 
   const handleAddColumn = (type: ColumnType) => {
     addColumn(type);
@@ -26,18 +21,13 @@ export default function Sidebar() {
   return (
     <>
       <div class="deck-sidebar">
-        {/* Account avatar */}
+        {/* Account avatar → account menu */}
         <div class="sidebar-top">
           <Show when={user()}>
             {(u) => (
               <button
                 class="sidebar-avatar-btn"
-                onClick={() => {
-                  const handle = u().domain
-                    ? `@${u().username}@${u().domain}`
-                    : `@${u().username}`;
-                  window.open(`/${handle}`, "_blank");
-                }}
+                onClick={() => setShowAccountMenu(!showAccountMenu())}
                 title={u().display_name || u().username}
               >
                 <img
@@ -49,6 +39,18 @@ export default function Sidebar() {
             )}
           </Show>
         </div>
+
+        {/* Compose button */}
+        <button
+          class="sidebar-btn sidebar-compose-btn"
+          onClick={() => openComposer()}
+          title={t("composer.post") || "Compose"}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
 
         {/* Column add buttons */}
         <div class="sidebar-columns">
@@ -91,15 +93,12 @@ export default function Sidebar() {
           >
             ⚙
           </button>
-          <button
-            class="sidebar-btn sidebar-logout"
-            onClick={handleLogout}
-            title={t("auth.logout") || "Logout"}
-          >
-            ⏻
-          </button>
         </div>
       </div>
+
+      <Show when={showAccountMenu()}>
+        <AccountMenu onClose={() => setShowAccountMenu(false)} />
+      </Show>
 
       <Show when={showSettings()}>
         <SettingsPanel onClose={() => setShowSettings(false)} />

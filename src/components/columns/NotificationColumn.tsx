@@ -15,6 +15,7 @@ import { onNotification, onReaction, resetUnread } from "@nekonoverse/ui/stores/
 import { useI18n } from "@nekonoverse/ui/i18n";
 import { defaultAvatar } from "@nekonoverse/ui/stores/instance";
 import type { Dictionary } from "@nekonoverse/ui/i18n/dictionaries/ja";
+import { navigateToProfile } from "../../stores/modals";
 
 function actorHandle(account: Notification["account"]): string {
   if (!account) return "";
@@ -209,7 +210,7 @@ export default function NotificationColumn() {
                           class="notification-actor"
                           onClick={(e) => {
                             e.preventDefault();
-                            window.open(profileUrl(notif.account), "_blank");
+                            if (notif.account) navigateToProfile(notif.account);
                           }}
                         >
                           <img
