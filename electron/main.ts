@@ -230,7 +230,7 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
         });
 
         let settled = false;
-        const debug = process.argv.includes("--debug");
+        const debug = process.argv.includes("--verbose");
 
         if (debug) {
           authWindow.webContents.openDevTools();
@@ -305,7 +305,7 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
 async function createWindow() {
   const distDir = path.join(__dirname, "..", "dist");
 
-  const debug = process.argv.includes("--debug");
+  const debug = process.argv.includes("--verbose");
 
   protocol.handle("nyandeck", async (request) => {
     const url = new URL(request.url);
@@ -437,7 +437,7 @@ async function createWindow() {
   mainWindow.loadURL("nyandeck://app/");
 
   // --debug flag: open DevTools and enable verbose logging
-  if (process.argv.includes("--debug")) {
+  if (process.argv.includes("--verbose")) {
     mainWindow.webContents.openDevTools();
   }
 
