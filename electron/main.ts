@@ -214,7 +214,8 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
         });
         const authorizeUrl = `${baseUrl}/oauth/authorize?${params}`;
 
-        // 4. Open BrowserWindow
+        // 4. Open BrowserWindow with a dedicated session partition
+        const partition = `oauth-${Date.now()}`;
         const authWindow = new BrowserWindow({
           width: 600,
           height: 700,
@@ -224,51 +225,65 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
           webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
+            partition,
           },
         });
 
         let settled = false;
+        const debug = process.argv.includes("--debug");
 
-        const handleRedirect = async (_event: Event, url: string) => {
-          if (settled || !url.startsWith(REDIRECT_URI)) return;
-          settled = true;
+        if (debug) {
+          authWindow.webContents.openDevTools();
+          authWindow.webContents.on("did-navigate", (_e, url) =>
+            console.log("[oauth] did-navigate:", url),
+          );
+          authWindow.webContents.on("did-fail-load", (_e, code, desc, url) =>
+            console.log("[oauth] did-fail-load:", code, desc, url),
+          );
+          console.log("[oauth] authorize URL:", authorizeUrl);
+        }
 
-          try {
-            const callbackUrl = new URL(url);
-            const code = callbackUrl.searchParams.get("code");
-            const returnedState = callbackUrl.searchParams.get("state");
+        // Intercept the callback URL via webRequest (most reliable method)
+        authWindow.webContents.session.webRequest.onBeforeRequest(
+          { urls: [`${REDIRECT_URI}*`] },
+          (details, callback) => {
+            if (settled) {
+              callback({ cancel: true });
+              return;
+            }
+            settled = true;
+            callback({ cancel: true });
 
-            if (!code) throw new Error("No authorization code received");
-            if (returnedState !== state) throw new Error("State mismatch");
+            (async () => {
+              try {
+                const callbackUrl = new URL(details.url);
+                const code = callbackUrl.searchParams.get("code");
+                const returnedState = callbackUrl.searchParams.get("state");
 
-            // 5. Exchange code for token
-            const accessToken = await exchangeCodeForToken(
-              baseUrl,
-              code,
-              oauthConfig!.client_id,
-              oauthConfig!.client_secret,
-              codeVerifier,
-            );
+                if (!code) throw new Error("No authorization code received");
+                if (returnedState !== state) throw new Error("State mismatch");
 
-            // 6. Save token
-            oauthConfig!.access_token = accessToken;
-            saveOAuthConfig(baseUrl, oauthConfig!);
+                // 5. Exchange code for token
+                const accessToken = await exchangeCodeForToken(
+                  baseUrl,
+                  code,
+                  oauthConfig!.client_id,
+                  oauthConfig!.client_secret,
+                  codeVerifier,
+                );
 
-            authWindow.close();
-            resolve();
-          } catch (err) {
-            authWindow.close();
-            reject(err);
-          }
-        };
+                // 6. Save token
+                oauthConfig!.access_token = accessToken;
+                saveOAuthConfig(baseUrl, oauthConfig!);
 
-        authWindow.webContents.on(
-          "will-redirect",
-          handleRedirect as (...args: unknown[]) => void,
-        );
-        authWindow.webContents.on(
-          "will-navigate",
-          handleRedirect as (...args: unknown[]) => void,
+                authWindow.close();
+                resolve();
+              } catch (err) {
+                authWindow.close();
+                reject(err);
+              }
+            })();
+          },
         );
 
         authWindow.on("closed", () => {
@@ -290,6 +305,8 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
 async function createWindow() {
   const distDir = path.join(__dirname, "..", "dist");
 
+  const debug = process.argv.includes("--debug");
+
   protocol.handle("nyandeck", async (request) => {
     const url = new URL(request.url);
 
@@ -305,13 +322,17 @@ async function createWindow() {
       }
 
       try {
-        return await net.fetch(backendUrl, {
+        if (debug) console.log("[proxy]", request.method, url.pathname);
+        const resp = await net.fetch(backendUrl, {
           method: request.method,
           headers,
           body: request.body,
           duplex: "half",
         } as RequestInit);
-      } catch {
+        if (debug) console.log("[proxy]", url.pathname, "→", resp.status);
+        return resp;
+      } catch (err) {
+        if (debug) console.error("[proxy] FAILED", url.pathname, err);
         return new Response(JSON.stringify({ error: "Server unreachable" }), {
           status: 502,
           headers: { "Content-Type": "application/json" },
@@ -414,6 +435,11 @@ async function createWindow() {
   });
 
   mainWindow.loadURL("nyandeck://app/");
+
+  // --debug flag: open DevTools and enable verbose logging
+  if (process.argv.includes("--debug")) {
+    mainWindow.webContents.openDevTools();
+  }
 
   mainWindow.on("closed", () => {
     mainWindow = null;
