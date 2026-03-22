@@ -3350,7 +3350,8 @@ a:hover {
 .compose-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
   z-index: 10000;
   display: flex;
   align-items: flex-start;
@@ -3359,14 +3360,15 @@ a:hover {
 }
 
 .compose-modal-content {
-  background: var(--bg);
+  background: var(--bg, #1a1a2e);
+  border: 1px solid var(--border, #333);
   border-radius: 12px;
   width: 560px;
   max-width: 90vw;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
   padding: 16px;
 }
 
@@ -3404,7 +3406,8 @@ a:hover {
 .profile-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
   z-index: 9500;
   display: flex;
   align-items: flex-start;
@@ -3413,14 +3416,15 @@ a:hover {
 }
 
 .profile-modal-content {
-  background: var(--bg);
+  background: var(--bg, #1a1a2e);
+  border: 1px solid var(--border, #333);
   border-radius: 12px;
   width: 480px;
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
 
 .profile-modal-close {
