@@ -68,8 +68,19 @@ function profileUrl(actor: Note["actor"]): string {
 const expandedCwNoteIds = new Set<string>();
 const revealedSensitiveNoteIds = new Set<string>();
 
+// Navigate helper: mentionify/renderMfm pass paths like "/@user" or "/@user@domain"
+function navigateFromPath(path: string) {
+  const match = path.match(/^\/@(.+)/);
+  if (match) {
+    openProfile({ acct: match[1] });
+  } else {
+    window.open(path, "_blank");
+  }
+}
+
 function QuoteEmbed(props: { note: Note }) {
   const { t } = useI18n();
+  const navigate = navigateFromPath;
   const [quoteRevealed, setQuoteRevealed] = createSignal(false);
   const handleClick = (e: MouseEvent) => {
     if ((e.target as HTMLElement).closest("a")) return;
@@ -251,6 +262,7 @@ function PollDisplay(props: { poll: Poll; noteId: string }) {
 
 export default function NoteCard(props: Props) {
   const { t } = useI18n();
+  const navigate = navigateFromPath;
   const [moreOpen, setMoreOpen] = createSignal(false);
   const [nyaizeSuppressed, setNyaizeSuppressed] = createSignal(false);
   const [boosted, setBoosted] = createSignal(props.note.reblogged || (props.note.reblog?.reblogged ?? false));
