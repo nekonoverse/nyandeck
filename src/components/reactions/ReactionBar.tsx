@@ -46,6 +46,9 @@ export default function ReactionBar(props: Props) {
   const [importEmoji, setImportEmoji] = createSignal<string | null>(null);
   const [importDomain, setImportDomain] = createSignal<string | null>(null);
 
+  let addBtnRef: HTMLButtonElement | undefined;
+  const [pickerPos, setPickerPos] = createSignal({ top: 0, left: 0 });
+
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
   let didLongPress = false;
 
@@ -272,10 +275,17 @@ export default function ReactionBar(props: Props) {
           </button>
         ))}
         <button
+          ref={(el) => { addBtnRef = el; }}
           class={`reaction-add-btn${ignoresReactions() ? " reaction-not-delivered" : ""}`}
           onClick={() => {
             const opening = !showPicker();
-            if (opening) (document.activeElement as HTMLElement)?.blur();
+            if (opening) {
+              (document.activeElement as HTMLElement)?.blur();
+              if (addBtnRef) {
+                const rect = addBtnRef.getBoundingClientRect();
+                setPickerPos({ top: rect.bottom + 4, left: rect.left });
+              }
+            }
             setShowPicker(opening);
           }}
           title={ignoresReactions() ? t("reactions.notDelivered" as any) : undefined}
@@ -284,11 +294,19 @@ export default function ReactionBar(props: Props) {
         </button>
         <Show when={showPicker()}>
           <div class="reaction-emoji-backdrop" onClick={() => setShowPicker(false)} />
-          <EmojiPicker
-            onSelect={(emoji) => toggleReaction(emoji)}
-            onClose={() => setShowPicker(false)}
-            usedEmojis={props.reactions.filter((r) => r.me).map((r) => r.emoji)}
-          />
+          <div
+            class="emoji-picker-fixed"
+            style={{
+              top: `${pickerPos().top}px`,
+              left: `${pickerPos().left}px`,
+            }}
+          >
+            <EmojiPicker
+              onSelect={(emoji) => toggleReaction(emoji)}
+              onClose={() => setShowPicker(false)}
+              usedEmojis={props.reactions.filter((r) => r.me).map((r) => r.emoji)}
+            />
+          </div>
         </Show>
       </div>
 

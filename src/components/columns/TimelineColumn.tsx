@@ -17,6 +17,7 @@ import {
 import { onUpdate, onReaction } from "@nekonoverse/ui/stores/streaming";
 import { useI18n } from "@nekonoverse/ui/i18n";
 import NoteCard from "../notes/NoteCard";
+import NoteComposer from "../notes/NoteComposer";
 
 interface Props {
   mode: "home" | "public";
@@ -227,6 +228,14 @@ export default function TimelineColumn(props: Props) {
       ref={(el) => { scrollContainer = el; }}
       onScroll={handleScroll}
     >
+      <Show when={isHome()}>
+        <NoteComposer
+          onPost={(note) => {
+            setNotes((prev) => [note, ...prev]);
+          }}
+        />
+      </Show>
+
       <Show when={bufferedNotes().length > 0}>
         <button class="new-posts-banner" onClick={flushBuffer}>
           {t("timeline.newPosts").replace("{count}", String(bufferedNotes().length))}
