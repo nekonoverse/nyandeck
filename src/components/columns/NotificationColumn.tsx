@@ -160,14 +160,19 @@ export default function NotificationColumn() {
     switch (type) {
       case "follow":
         return "👤";
+      case "follow_request":
+        return "👤";
       case "mention":
         return "💬";
       case "reblog":
+      case "renote":
         return "🔁";
       case "favourite":
         return "⭐";
       case "reaction":
         return "✨";
+      case "status":
+        return "📝";
       default:
         return "🔔";
     }
