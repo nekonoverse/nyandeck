@@ -10,18 +10,12 @@ import LoginScreen from "./components/LoginScreen";
 initTheme();
 
 export default function App() {
-  onMount(async () => {
+  onMount(() => {
     fetchInstance();
-    if (window.nyandeck) {
-      // Electron: check for saved OAuth token before fetching user
-      const hasToken = await window.nyandeck.oauthCheck();
-      if (hasToken) {
-        fetchCurrentUser();
-      }
-    } else {
-      // Dev mode: cookie-based auth
-      fetchCurrentUser();
-    }
+    // Always call fetchCurrentUser — in Electron the protocol handler
+    // injects the Bearer token if available; if not, the server returns 401
+    // and authLoading is set to false, showing the login screen.
+    fetchCurrentUser();
   });
 
   const stopPolling = startVersionPolling();
