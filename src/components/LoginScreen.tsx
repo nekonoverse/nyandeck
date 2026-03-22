@@ -152,31 +152,22 @@ export default function LoginScreen() {
         {/* Server URL section (Electron only) */}
         <Show when={isElectron()}>
           <div class="server-url-section">
-            <Show
-              when={serverEditing()}
-              fallback={
-                <button
-                  class="server-url-display"
-                  onClick={() => setServerEditing(true)}
-                  title={t("auth.changeServer") || "Change server"}
-                >
-                  {serverUrl()}
-                </button>
-              }
-            >
-              <div class="server-url-edit">
-                <input
-                  type="url"
-                  placeholder="https://example.com"
-                  value={serverDraft()}
-                  onInput={(e) => setServerDraft(e.currentTarget.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleServerChange();
-                    if (e.key === "Escape") setServerEditing(false);
-                  }}
-                  disabled={serverLoading()}
-                  autofocus
-                />
+            <label class="server-url-label" for="server-url">
+              {t("auth.serverUrl") || "Server URL"}
+            </label>
+            <div class="server-url-edit">
+              <input
+                id="server-url"
+                type="url"
+                placeholder="https://example.com"
+                value={serverDraft()}
+                onInput={(e) => setServerDraft(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleServerChange();
+                }}
+                disabled={serverLoading()}
+              />
+              <Show when={serverDraft() !== serverUrl()}>
                 <button
                   onClick={handleServerChange}
                   disabled={serverLoading()}
@@ -186,8 +177,8 @@ export default function LoginScreen() {
                     ? t("common.loading") || "..."
                     : t("auth.connect") || "Connect"}
                 </button>
-              </div>
-            </Show>
+              </Show>
+            </div>
           </div>
         </Show>
 

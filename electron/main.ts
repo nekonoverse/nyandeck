@@ -234,19 +234,44 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
 
         if (debug) {
           authWindow.webContents.openDevTools();
-          authWindow.webContents.on("did-navigate", (_e, url) =>
-            console.log("[oauth] did-navigate:", url),
+          authWindow.webContents.on("will-navigate", (_e, url) =>
+            console.log("[oauth] will-navigate:", url),
+          );
+          authWindow.webContents.on("did-navigate", (_e, url, httpResponseCode) =>
+            console.log("[oauth] did-navigate:", url, "status:", httpResponseCode),
+          );
+          authWindow.webContents.on("did-redirect-navigation", (_e, url) =>
+            console.log("[oauth] did-redirect-navigation:", url),
           );
           authWindow.webContents.on("did-fail-load", (_e, code, desc, url) =>
             console.log("[oauth] did-fail-load:", code, desc, url),
           );
+          authWindow.webContents.on("console-message", (_e, _level, message) =>
+            console.log("[oauth][console]", message),
+          );
           console.log("[oauth] authorize URL:", authorizeUrl);
         }
+
+        // Strip CSP form-action directive — it blocks the TOTP form POST
+        // in the OAuth window (Chromium treats POST-navigated pages differently).
+        authWindow.webContents.session.webRequest.onHeadersReceived(
+          (details, callback) => {
+            const headers = { ...details.responseHeaders };
+            for (const key of Object.keys(headers)) {
+              if (key.toLowerCase() === "content-security-policy") {
+                headers[key] = (headers[key] as string[]).map((v) =>
+                  v.replace(/form-action[^;]*;?/g, ""),
+                );
+              }
+            }
+            callback({ responseHeaders: headers });
+          },
+        );
 
         // Intercept the callback URL via webRequest (no URL filter — catch all)
         authWindow.webContents.session.webRequest.onBeforeRequest(
           (details, callback) => {
-            if (debug) console.log("[oauth] request:", details.url);
+            if (debug) console.log("[oauth] request:", details.method, details.url);
             if (!details.url.startsWith(REDIRECT_URI)) {
               callback({});
               return;
@@ -476,9 +501,22 @@ async function createWindow() {
 
   mainWindow.loadURL("nyandeck://app/");
 
-  // --debug flag: open DevTools and enable verbose logging
+  // --verbose flag: open DevTools and enable verbose logging
   if (process.argv.includes("--verbose")) {
     mainWindow.webContents.openDevTools();
+  }
+
+  // --test-oauth flag: auto-click login after page load
+  if (process.argv.includes("--test-oauth")) {
+    mainWindow.webContents.on("did-finish-load", () => {
+      setTimeout(() => {
+        mainWindow!.webContents.executeJavaScript(`
+          const btn = document.querySelector('.auth-form button');
+          if (btn) { btn.click(); console.log('[test] clicked login button'); }
+          else { console.log('[test] login button not found'); }
+        `);
+      }, 2000);
+    });
   }
 
   mainWindow.on("closed", () => {
