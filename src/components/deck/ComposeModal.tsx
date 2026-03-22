@@ -1,13 +1,14 @@
 import { createSignal, Show, createEffect } from "solid-js";
 import { composeState, closeComposer } from "../../stores/modals";
 import NoteComposer from "../notes/NoteComposer";
+import { useI18n } from "@nekonoverse/ui/i18n";
 import type { Note } from "@nekonoverse/ui/api/statuses";
 
 export default function ComposeModal() {
+  const { t } = useI18n();
   const [key, setKey] = createSignal(0);
   const [droppedFiles, setDroppedFiles] = createSignal<FileList | null>(null);
 
-  // Increment key each time modal opens to reset the form
   createEffect(() => {
     if (composeState().open) {
       setKey((k) => k + 1);
@@ -25,11 +26,16 @@ export default function ComposeModal() {
     }
   };
 
-  // Handle keyboard shortcut
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
       closeComposer();
     }
+  };
+
+  const title = () => {
+    if (composeState().replyTo) return t("reply.reply");
+    if (composeState().quoteNote) return t("boost.quoting");
+    return t("composer.post");
   };
 
   return (
@@ -47,18 +53,23 @@ export default function ComposeModal() {
         }}
       >
         <div class="compose-modal-content">
-          <button class="compose-modal-close" onClick={closeComposer}>
-            ✕
-          </button>
-          <NoteComposer
-            key={key()}
-            onPost={handlePost}
-            replyTo={composeState().replyTo}
-            onClearReply={closeComposer}
-            quoteNote={composeState().quoteNote}
-            onClearQuote={() => {}}
-            externalFiles={droppedFiles()}
-          />
+          <div class="compose-modal-header">
+            <span class="compose-modal-title">{title()}</span>
+            <button class="compose-modal-close" onClick={closeComposer}>
+              ✕
+            </button>
+          </div>
+          <div class="compose-modal-body">
+            <NoteComposer
+              key={key()}
+              onPost={handlePost}
+              replyTo={composeState().replyTo}
+              onClearReply={closeComposer}
+              quoteNote={composeState().quoteNote}
+              onClearQuote={() => {}}
+              externalFiles={droppedFiles()}
+            />
+          </div>
         </div>
       </div>
     </Show>
