@@ -13,6 +13,9 @@ declare global {
     nyandeck?: {
       getServerUrl(): Promise<string>;
       setServerUrl(url: string): Promise<void>;
+      oauthLogin(): Promise<void>;
+      oauthLogout(): Promise<void>;
+      oauthCheck(): Promise<boolean>;
     };
   }
 }
@@ -27,20 +30,23 @@ export default function LoginScreen() {
   const [serverLoading, setServerLoading] = createSignal(false);
   const isElectron = () => !!window.nyandeck;
 
-  // Login form
+  // Login form (dev mode only)
   const [username, setUsername] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [error, setError] = createSignal("");
   const [loading, setLoading] = createSignal(false);
 
-  // TOTP
+  // TOTP (dev mode only)
   const [totpRequired, setTotpRequired] = createSignal(false);
   const [totpToken, setTotpToken] = createSignal("");
   const [totpCode, setTotpCode] = createSignal("");
   const [totpLoading, setTotpLoading] = createSignal(false);
 
-  // Passkey
+  // Passkey (dev mode only)
   const [passkeyLoading, setPasskeyLoading] = createSignal(false);
+
+  // OAuth (Electron mode)
+  const [oauthLoading, setOauthLoading] = createSignal(false);
 
   onMount(async () => {
     if (window.nyandeck) {
@@ -63,7 +69,6 @@ export default function LoginScreen() {
       setServerUrl(url);
       setServerEditing(false);
       await fetchInstance();
-      await fetchCurrentUser();
     } catch {
       setError(t("auth.serverError") || "Failed to connect to server");
     } finally {
@@ -71,6 +76,23 @@ export default function LoginScreen() {
     }
   };
 
+  // --- Electron OAuth login ---
+  const handleOAuthLogin = async () => {
+    setError("");
+    setOauthLoading(true);
+    try {
+      await window.nyandeck!.oauthLogin();
+      await fetchCurrentUser();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : t("auth.loginFailed") || "Login failed",
+      );
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
+  // --- Dev mode direct login ---
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
     setError("");
@@ -81,7 +103,6 @@ export default function LoginScreen() {
         setTotpRequired(true);
         setTotpToken(resp.totp_token);
       }
-      // login success → currentUser updated → App.tsx auto-transitions
     } catch (err) {
       setError(err instanceof Error ? err.message : t("auth.loginFailed"));
     } finally {
@@ -175,84 +196,100 @@ export default function LoginScreen() {
           <div class="auth-error">{error()}</div>
         </Show>
 
-        {/* TOTP form */}
-        <Show
-          when={!totpRequired()}
-          fallback={
-            <form onSubmit={handleTotpSubmit} class="auth-form">
-              <h2>{t("totp.required") || "Two-factor authentication"}</h2>
-              <div class="field">
-                <label for="totp-code">
-                  {t("totp.enterCode") || "Enter code"}
-                </label>
-                <input
-                  id="totp-code"
-                  type="text"
-                  inputMode="numeric"
-                  autocomplete="one-time-code"
-                  maxLength={10}
-                  value={totpCode()}
-                  onInput={(e) => setTotpCode(e.currentTarget.value)}
-                  required
-                  autofocus
-                />
-              </div>
-              <button type="submit" disabled={totpLoading() || !totpCode().trim()}>
-                {totpLoading()
-                  ? t("auth.loggingIn") || "Verifying..."
-                  : t("totp.verify") || "Verify"}
-              </button>
-            </form>
-          }
-        >
-          {/* Login form */}
-          <form onSubmit={handleSubmit} class="auth-form">
-            <div class="field">
-              <label for="username">
-                {t("auth.username") || "Username"}
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username()}
-                onInput={(e) => setUsername(e.currentTarget.value)}
-                required
-              />
-            </div>
-            <div class="field">
-              <label for="password">
-                {t("auth.password") || "Password"}
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password()}
-                onInput={(e) => setPassword(e.currentTarget.value)}
-                required
-              />
-            </div>
-            <button type="submit" disabled={loading()}>
-              {loading()
+        {/* Electron mode: OAuth login button */}
+        <Show when={isElectron()}>
+          <div class="auth-form">
+            <button
+              type="button"
+              disabled={oauthLoading()}
+              onClick={handleOAuthLogin}
+            >
+              {oauthLoading()
                 ? t("auth.loggingIn") || "Logging in..."
                 : t("common.login") || "Login"}
             </button>
+          </div>
+        </Show>
 
-            <Show when={isPasskeySupported()}>
-              <div class="passkey-divider">
-                <span>{t("auth.or") || "or"}</span>
+        {/* Dev mode: direct login form */}
+        <Show when={!isElectron()}>
+          <Show
+            when={!totpRequired()}
+            fallback={
+              <form onSubmit={handleTotpSubmit} class="auth-form">
+                <h2>{t("totp.required") || "Two-factor authentication"}</h2>
+                <div class="field">
+                  <label for="totp-code">
+                    {t("totp.enterCode") || "Enter code"}
+                  </label>
+                  <input
+                    id="totp-code"
+                    type="text"
+                    inputMode="numeric"
+                    autocomplete="one-time-code"
+                    maxLength={10}
+                    value={totpCode()}
+                    onInput={(e) => setTotpCode(e.currentTarget.value)}
+                    required
+                    autofocus
+                  />
+                </div>
+                <button type="submit" disabled={totpLoading() || !totpCode().trim()}>
+                  {totpLoading()
+                    ? t("auth.loggingIn") || "Verifying..."
+                    : t("totp.verify") || "Verify"}
+                </button>
+              </form>
+            }
+          >
+            <form onSubmit={handleSubmit} class="auth-form">
+              <div class="field">
+                <label for="username">
+                  {t("auth.username") || "Username"}
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  value={username()}
+                  onInput={(e) => setUsername(e.currentTarget.value)}
+                  required
+                />
               </div>
-              <button
-                type="button"
-                class="btn-passkey"
-                disabled={passkeyLoading()}
-                onClick={handlePasskeyLogin}
-              >
-                {passkeyLoading()
-                  ? t("auth.authenticating") || "Authenticating..."
-                  : t("auth.loginWithPasskey") || "Login with Passkey"}
+              <div class="field">
+                <label for="password">
+                  {t("auth.password") || "Password"}
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password()}
+                  onInput={(e) => setPassword(e.currentTarget.value)}
+                  required
+                />
+              </div>
+              <button type="submit" disabled={loading()}>
+                {loading()
+                  ? t("auth.loggingIn") || "Logging in..."
+                  : t("common.login") || "Login"}
               </button>
-            </Show>
-          </form>
+
+              <Show when={isPasskeySupported()}>
+                <div class="passkey-divider">
+                  <span>{t("auth.or") || "or"}</span>
+                </div>
+                <button
+                  type="button"
+                  class="btn-passkey"
+                  disabled={passkeyLoading()}
+                  onClick={handlePasskeyLogin}
+                >
+                  {passkeyLoading()
+                    ? t("auth.authenticating") || "Authenticating..."
+                    : t("auth.loginWithPasskey") || "Login with Passkey"}
+                </button>
+              </Show>
+            </form>
+          </Show>
         </Show>
       </div>
     </div>

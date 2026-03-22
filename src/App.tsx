@@ -10,9 +10,18 @@ import LoginScreen from "./components/LoginScreen";
 initTheme();
 
 export default function App() {
-  onMount(() => {
-    fetchCurrentUser();
+  onMount(async () => {
     fetchInstance();
+    if (window.nyandeck) {
+      // Electron: check for saved OAuth token before fetching user
+      const hasToken = await window.nyandeck.oauthCheck();
+      if (hasToken) {
+        fetchCurrentUser();
+      }
+    } else {
+      // Dev mode: cookie-based auth
+      fetchCurrentUser();
+    }
   });
 
   const stopPolling = startVersionPolling();
