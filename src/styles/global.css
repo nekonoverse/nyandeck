@@ -1436,6 +1436,11 @@ a:hover {
   margin-top: 4px;
 }
 
+.hover-card-fixed {
+  position: fixed;
+  margin-top: 0;
+}
+
 .hover-card-loading {
   height: 60px;
 }
@@ -1542,10 +1547,11 @@ a:hover {
 }
 
 @media (max-width: 600px) {
-  .hover-card {
+  .hover-card,
+  .hover-card.hover-card-fixed {
     position: fixed;
-    top: 50%;
-    left: 50%;
+    top: 50% !important;
+    left: 50% !important;
     transform: translate(-50%, -50%);
     width: calc(100vw - 32px);
     max-width: 300px;

@@ -38,6 +38,7 @@ export default function UserHoverCard(props: Props) {
   const [account, setAccount] = createSignal<Account | null>(null);
   const [followLoading, setFollowLoading] = createSignal(false);
   const [showUnfollowModal, setShowUnfollowModal] = createSignal(false);
+  const [cardPos, setCardPos] = createSignal({ top: 0, left: 0 });
   let showTimer: number | undefined;
   let hideTimer: number | undefined;
   let longPressTimer: number | undefined;
@@ -58,6 +59,12 @@ export default function UserHoverCard(props: Props) {
     } catch {}
   };
 
+  const computeCardPos = () => {
+    if (!wrapperEl) return;
+    const rect = wrapperEl.getBoundingClientRect();
+    setCardPos({ top: rect.bottom + 4, left: rect.left });
+  };
+
   // --- Click handler: desktop only (タッチデバイスはtouchイベントで処理) ---
   const handleClick = (e: MouseEvent) => {
     if (isTouchDevice()) {
@@ -69,6 +76,7 @@ export default function UserHoverCard(props: Props) {
     if (visible()) {
       setVisible(false);
     } else {
+      computeCardPos();
       setVisible(true);
       if (!account()) fetchAccount();
     }
@@ -79,6 +87,7 @@ export default function UserHoverCard(props: Props) {
     if (isTouchDevice()) return;
     clearTimeout(hideTimer);
     showTimer = window.setTimeout(() => {
+      computeCardPos();
       setVisible(true);
       if (!account()) fetchAccount();
     }, 300);
@@ -98,6 +107,7 @@ export default function UserHoverCard(props: Props) {
       longPressTriggered = true;
       // Prevent subsequent click from navigating
       e.preventDefault();
+      computeCardPos();
       setVisible(true);
       if (!account()) fetchAccount();
     }, 500);
@@ -113,6 +123,7 @@ export default function UserHoverCard(props: Props) {
     } else if (!visible()) {
       // 短いタップでカードを表示
       e.preventDefault();
+      computeCardPos();
       setVisible(true);
       if (!account()) fetchAccount();
     }
@@ -127,33 +138,30 @@ export default function UserHoverCard(props: Props) {
   // タッチデバイスでのカード外タップはbackdropのonClickで処理するため、
   // documentレベルのtouchstartリスナーは不要
 
-  // --- Positioning for mobile: adjust card so it doesn't overflow viewport ---
+  // --- Adjust fixed card so it doesn't overflow viewport ---
   const adjustCardPosition = (el: HTMLDivElement) => {
     cardEl = el;
     if (typeof window === "undefined") return;
-    // Use requestAnimationFrame to ensure the element is rendered
     requestAnimationFrame(() => {
       const rect = el.getBoundingClientRect();
       const vw = window.innerWidth;
+      const vh = window.innerHeight;
 
-      // Reset any previous inline positioning
-      el.style.left = "";
-      el.style.right = "";
+      let { top, left } = cardPos();
 
-      if (rect.right > vw - 8) {
-        // Card overflows right edge
-        el.style.left = "auto";
-        el.style.right = "0";
-        // Re-check after moving
-        const newRect = el.getBoundingClientRect();
-        if (newRect.left < 8) {
-          el.style.right = "auto";
-          el.style.left = `-${rect.left - 8}px`;
-        }
-      } else if (rect.left < 8) {
-        // Card overflows left edge
-        el.style.left = `-${rect.left - 8}px`;
+      // Right edge overflow
+      if (left + rect.width > vw - 8) {
+        left = vw - rect.width - 8;
       }
+      // Left edge overflow
+      if (left < 8) left = 8;
+      // Bottom edge overflow — show above the wrapper instead
+      if (top + rect.height > vh - 8 && wrapperEl) {
+        const wrapperRect = wrapperEl.getBoundingClientRect();
+        top = wrapperRect.top - rect.height - 4;
+      }
+
+      setCardPos({ top, left });
     });
   };
 
@@ -214,8 +222,9 @@ export default function UserHoverCard(props: Props) {
       </Show>
       <Show when={visible()}>
         <div
-          class={`hover-card${isTouchDevice() ? " hover-card-touch" : ""}`}
+          class={`hover-card hover-card-fixed${isTouchDevice() ? " hover-card-touch" : ""}`}
           ref={adjustCardPosition}
+          style={{ top: `${cardPos().top}px`, left: `${cardPos().left}px` }}
           onMouseEnter={() => clearTimeout(hideTimer)}
           onMouseLeave={handleMouseLeave}
         >
