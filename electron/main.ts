@@ -43,7 +43,7 @@ function getServerUrl(): string {
   const config = loadConfig();
   if (config.serverUrl) return config.serverUrl;
 
-  return "https://n.arkjp.net";
+  return "https://nekonoverse.org";
 }
 
 function saveServerUrl(url: string): void {
@@ -290,7 +290,7 @@ function performOAuthLogin(baseUrl: string): Promise<void> {
 async function createWindow() {
   const distDir = path.join(__dirname, "..", "dist");
 
-  protocol.handle("nyandeck", (request) => {
+  protocol.handle("nyandeck", async (request) => {
     const url = new URL(request.url);
 
     // Proxy /api/* requests to the backend server with Bearer token injection
@@ -304,23 +304,37 @@ async function createWindow() {
         headers.set("Authorization", `Bearer ${oauthConfig.access_token}`);
       }
 
-      return net.fetch(backendUrl, {
-        method: request.method,
-        headers,
-        body: request.body,
-        duplex: "half",
-      } as RequestInit);
+      try {
+        return await net.fetch(backendUrl, {
+          method: request.method,
+          headers,
+          body: request.body,
+          duplex: "half",
+        } as RequestInit);
+      } catch {
+        return new Response(JSON.stringify({ error: "Server unreachable" }), {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Proxy /oauth/* requests to the backend server (for token exchange etc.)
     if (url.pathname.startsWith("/oauth/")) {
       const backendUrl = `${serverUrl}${url.pathname}${url.search}`;
-      return net.fetch(backendUrl, {
-        method: request.method,
-        headers: request.headers,
-        body: request.body,
-        duplex: "half",
-      } as RequestInit);
+      try {
+        return await net.fetch(backendUrl, {
+          method: request.method,
+          headers: request.headers,
+          body: request.body,
+          duplex: "half",
+        } as RequestInit);
+      } catch {
+        return new Response(JSON.stringify({ error: "Server unreachable" }), {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Serve local static files from dist/
